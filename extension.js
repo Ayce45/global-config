@@ -32,7 +32,10 @@ function activate( context )
 
     function replaceVariables( text, workspacePath )
     {
-        text = text.replace( "${workspaceFolder}", workspacePath );
+        var workspaceFolderBasename = path.basename( workspacePath );
+
+        text = text.replace( /\$\{workspaceFolder\}/g, workspacePath );
+        text = text.replace( /\$\{workspaceFolderBasename\}/g, workspaceFolderBasename );
 
         text = text.replace( envRegex, function( match, name )
         {
@@ -107,7 +110,7 @@ function activate( context )
                                         debug( "  Hard Linking " + entry + " -> " + destination );
                                         fs.link( file, target );
                                     }
-                                    if( findMatch( links, entry ) )
+                                    else if( findMatch( links, entry ) )
                                     {
                                         debug( "  Sym Linking " + entry + " -> " + destination );
                                         fs.symlinkSync( file, target );
@@ -115,7 +118,11 @@ function activate( context )
                                     else
                                     {
                                         debug( "  Copying " + entry + " -> " + destination );
-                                        fs.copySync( file, target, { overwrite: false } );
+
+                                        var content = fs.readFileSync( file, 'utf8' );
+                                        var processedContent = replaceVariables( content, workspacePath );
+
+                                        fs.writeFileSync( target, processedContent, { flag: 'wx' } );
                                     }
                                 }
                                 catch( e )
