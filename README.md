@@ -46,7 +46,7 @@ This is an array of files which should be hard linked instead of copied.
 
 `global-config.destinations`
 
-This is an mapping of files to alternative destinations. Note: paths are absolute, but you can use `${workspaceFolder}`, or other environment variables and make them relative from there.
+This is an mapping of files to alternative destinations. Note: paths are absolute, but you can use `${workspaceFolder}`, `${workspaceFolderBasename}`, or other environment variables and make them relative from there.
 
 For example,
 
@@ -61,6 +61,52 @@ For example,
 *Notes:*
 
 *Links, hard links and destinations can also use glob patterns to match files. Links and hardlinks settings are still applied to files copied to alternative destinations.*
+
+## Variable Substitution in File Content
+
+When files are **copied** (not linked or hard linked), variables inside the file content are automatically replaced with their resolved values. This allows you to create template configuration files that adapt to each workspace.
+
+The following variables are supported:
+
+- `${workspaceFolder}` — The full path of the workspace folder (e.g. `/home/user/projects/my-app`)
+- `${workspaceFolderBasename}` — The name of the workspace folder (e.g. `my-app`)
+- `${ANY_ENV_VAR}` — Any environment variable (e.g. `${HOME}`, `${USER}`)
+
+For example, a template `launch.json` in your global config folder could contain:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run ${workspaceFolderBasename}",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/src/index.js"
+        }
+    ]
+}
+```
+
+When copied into a workspace named `my-app` located at `/home/user/projects/my-app`, the variables will be replaced:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run my-app",
+            "type": "node",
+            "request": "launch",
+            "cwd": "/home/user/projects/my-app",
+            "program": "/home/user/projects/my-app/src/index.js"
+        }
+    ]
+}
+```
+
+*Note: Variable substitution only applies to copied files. Symlinked and hard linked files are shared directly and their content is not modified.*
 
 ## Output
 
